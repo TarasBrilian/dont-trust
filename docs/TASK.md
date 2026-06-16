@@ -139,12 +139,18 @@ These change downstream work; decide before building Phase 3+.
   genfixture replica); wired into `VerificationService.proveAndSubmitFromAttestation`.
   Validated by ATT-2's `snarkjs verify` (a built witness is accepted). api builds clean.
   Note: `claimedSupply` is passed in, never from the attestation (INVARIANT 6).
-- [ ] **API-3 (P0) — `ChainService.totalSupply()`** via `@stellar/stellar-sdk`
-  (simulate `token.total_supply()`, parse i128→bigint). Replaces the stub.
-- [ ] **API-4 (P0) — `ChainService.submitProof()`**: map `EncodedProof`→
-  `{a:BytesN<64>,b:BytesN<128>,c:BytesN<64>}` + signals→`Vec<BytesN<32>>` ScVals,
-  invoke `submit_proof`, sign/submit tx, parse the `Backed` event. *Depends on:*
-  CON-3, ZK-5. *Done when:* a real proof verifies against a deployed contract.
+- [x] **API-3 ✅ — `ChainService.totalSupply()`** via `@stellar/stellar-sdk` v12
+  (`rpc.Server`): credential-free read-only `simulateTransaction` of
+  `token.total_supply()`, `scValToNative` i128→bigint. Replaces the stub; api builds.
+- [~] **API-4 🟡 — `ChainService.submitProof()`** (code complete; live check pending
+  OPS-2/OPS-3). Maps `EncodedProof`→`Proof` struct + signals→`Vec<BytesN<32>>`,
+  `prepareTransaction`(simulate+assemble)→sign→`sendTransaction`→poll. **Bug caught
+  pre-deploy:** `nativeToScVal({…})` emits scvString keys; a Soroban struct needs
+  scvSymbol keys (sorted), so the Proof is now built with an explicit
+  `xdr.ScMapEntry`/`scvSymbol` helper — verified offline (symbol keys a,b,c; bytes
+  64/128/64; signals vec 6×32B). A trap (PairingFailed/SupplyMismatch/…) surfaces as
+  a thrown error at simulate, so the tamper case fails loudly. *Done when:* a real
+  proof verifies against a deployed contract (OPS-3). *Depends on:* CON-3, ZK-5 ✅.
 - [ ] **API-5 (P0) — Endpoints.** `POST /attestations` (ingest attestor output),
   `POST /verifications` (build witness → prove → submit → persist), keep
   `GET /verifications`. Add DTO validation (`class-validator`). *Depends on:*
