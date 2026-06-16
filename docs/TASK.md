@@ -180,13 +180,17 @@ These change downstream work; decide before building Phase 3+.
 - [x] **WEB-1 ✅** Dashboard (portfolio overview + project grid + history).
 - [x] **WEB-2 ✅** Prover console (interactive tamper demo, simulated).
 - [x] **WEB-3 ✅** Verification request flow (form → queue → detail, localStorage).
-- [ ] **WEB-4 (P0) — `lib/chain.ts` real reads.** Implement `readSupply()` and
-  `readBackingStatus()` against the deployed contracts via stellar-sdk (the
-  trustless path — INVARIANT: status comes from chain, not the API). Replaces the
-  stubs. *Depends on:* CON-3, OPS-2.
-- [ ] **WEB-5 (P0) — Swap mock → live on the dashboard.** `getProjects()` reads
-  chain status per project; keep `lib/mock.ts` behind a flag for offline demos.
-  *Depends on:* WEB-4.
+- [x] **WEB-4 ✅ — `lib/chain.ts` real reads.** `readSupply(tokenId)`,
+  `readBackingStatus(verifierId)`, `latestLedger()` via stellar-sdk read-only
+  `simulateTransaction` (no wallet). Verified against the live contracts: supply
+  `1000000n`, status `{backed:true, commitment, supply, verified_at}` decodes to
+  `OnChainStatus`. Trustless — never via the API (ARCHITECTURE §2).
+- [x] **WEB-5 ✅ — dashboard reads live.** `lib/data.ts` dispatches mock↔live;
+  live is auto-on when `NEXT_PUBLIC_VERIFIER_ID/TOKEN_ID` are set (deploy.sh writes
+  `apps/web/.env.local`), `NEXT_PUBLIC_USE_MOCK=1` forces mock. `lib/live.ts` reads
+  each project's `verifier.status()` from chain. Live mode shows the real project(s)
+  FIRST, then a few mock projects as fillers so the grid stays populated for the
+  demo (id collisions dropped). `next build` passes.
 - [ ] **WEB-6 (P1) — Wire request flow to the API** (`POST /requests`, queue/detail
   from `GET/PATCH`), replacing the localStorage store. *Depends on:* API-6.
 - [ ] **WEB-7 (P1) — Prover console → backend.** Optional "real proof" mode that

@@ -108,10 +108,11 @@ cat > "$OUT/deployed.json" <<JSON
 JSON
 echo "==> wrote $OUT/deployed.json"
 
-# Upsert ids into .env so apps/api (VERIFIER_ID/TOKEN_ID) and apps/web
-# (NEXT_PUBLIC_*) pick up the live deployment.
-set_env() { # key value
-  local k="$1" v="$2" f="$ROOT/.env"
+# Upsert ids so apps/api (.env: VERIFIER_ID/TOKEN_ID) and apps/web
+# (apps/web/.env.local: NEXT_PUBLIC_*) pick up the live deployment. Next loads
+# env from the app dir, not the repo root, so the web ids go in .env.local.
+set_env() { # key value file
+  local k="$1" v="$2" f="$3"
   touch "$f"
   if grep -q "^$k=" "$f"; then
     local tmp; tmp=$(mktemp); sed "s|^$k=.*|$k=$v|" "$f" > "$tmp" && mv "$tmp" "$f"
@@ -119,9 +120,11 @@ set_env() { # key value
     printf '%s=%s\n' "$k" "$v" >> "$f"
   fi
 }
-set_env TOKEN_ID "$TOKEN_ID"
-set_env VERIFIER_ID "$VERIFIER_ID"
-set_env NEXT_PUBLIC_TOKEN_ID "$TOKEN_ID"
-set_env NEXT_PUBLIC_VERIFIER_ID "$VERIFIER_ID"
-echo "==> updated .env ids"
+set_env TOKEN_ID "$TOKEN_ID" "$ROOT/.env"
+set_env VERIFIER_ID "$VERIFIER_ID" "$ROOT/.env"
+WEB_ENV="$ROOT/apps/web/.env.local"
+set_env NEXT_PUBLIC_RPC_URL "${RPC_URL:-https://soroban-testnet.stellar.org}" "$WEB_ENV"
+set_env NEXT_PUBLIC_TOKEN_ID "$TOKEN_ID" "$WEB_ENV"
+set_env NEXT_PUBLIC_VERIFIER_ID "$VERIFIER_ID" "$WEB_ENV"
+echo "==> updated .env (api) + apps/web/.env.local (web)"
 echo "==> done. next: ./e2e.sh (attest -> prove -> verify, happy + tamper)"

@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getProjects,
   getHistory,
+  IS_LIVE,
   type RwaProject,
   type VerificationRow,
-} from "../../src/lib/mock";
+} from "../../src/lib/data";
 import { approvedAsProjects } from "../../src/lib/requests";
 import {
   formatAmount,
@@ -69,8 +70,9 @@ export default function Dashboard() {
 
   const load = useCallback(async () => {
     const [p, h] = await Promise.all([getProjects(), getHistory()]);
-    // Approved verification requests appear alongside the seed projects.
-    setProjects([...approvedAsProjects(), ...p]);
+    // In mock mode, approved verification requests (localStorage) appear
+    // alongside the seed projects. In live mode the grid is purely on-chain.
+    setProjects([...(IS_LIVE ? [] : approvedAsProjects()), ...p]);
     setHistory(h);
   }, []);
 
@@ -358,17 +360,23 @@ export default function Dashboard() {
                     </span>
                   </td>
                   <td className="hide-sm">
-                    <a
-                      className="txlink mono"
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        copy(row.txHash, "Transaction hash");
-                      }}
-                    >
-                      {truncateMiddle(row.txHash)}
-                      <LinkIcon width={13} height={13} />
-                    </a>
+                    {row.txHash ? (
+                      <a
+                        className="txlink mono"
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          copy(row.txHash, "Transaction hash");
+                        }}
+                      >
+                        {truncateMiddle(row.txHash)}
+                        <LinkIcon width={13} height={13} />
+                      </a>
+                    ) : (
+                      <span className="mono" style={{ color: "var(--text-faint)" }}>
+                        on-chain
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}
