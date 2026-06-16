@@ -105,10 +105,11 @@ These change downstream work; decide before building Phase 3+.
 ## 4. Attestor (`apps/attestor`)
 
 - [x] **ATT-1 ✅** `Attestor` class (EdDSA/BabyJubjub) + CLI scaffold.
-- [ ] **ATT-2 (P0)** End-to-end correctness test: sign via the **actual**
-  `Attestor` class, build the witness, `snarkjs fullprove`+`verify` → must pass.
-  Today only `genfixture.mjs` (a replica) is exercised. *Done when:* a test
-  proves the shipped CLI output is circuit-valid.
+- [x] **ATT-2 ✅** End-to-end correctness test: signs via the **actual** `Attestor`
+  class → `buildWitnessInput` (shared) → `snarkjs fullprove`+`verify`. 3 tests pass
+  (`apps/attestor/test/attest-prove-verify.test.mjs`): happy + over-backed verify,
+  under-backed is unprovable (solvency constraint, circom l.89). No `genfixture.mjs`
+  replica — the test exercises the same builder apps/api uses. Run: `npm test -w apps/attestor`.
 - [ ] **ATT-3 (P1)** Output the on-chain allowlist key (`ax||ay`) and a
   ready-to-submit attestation JSON the backend ingests as-is.
 - [ ] **ATT-4 (P1)** Key management: load/generate BabyJubjub key from a file/env
@@ -130,9 +131,11 @@ These change downstream work; decide before building Phase 3+.
 ## 6. Backend (`apps/api`)
 
 - [x] **API-1 ✅** NestJS skeleton, repository pattern, in-memory adapters, DI.
-- [ ] **API-2 (P0) — Witness builder.** The missing glue: `Attestation` (balances
-  + salts + signature + token/expiry) → `WitnessInput`, using `@zk-pob/shared`
-  formulas. *Done when:* unit test builds a witness that `snarkjs verify` accepts.
+- [x] **API-2 ✅ — Witness builder.** `buildWitnessInput(attestation, claimedSupply)`
+  lives in `packages/shared/src/witness.ts` (single source — also retires the
+  genfixture replica); wired into `VerificationService.proveAndSubmitFromAttestation`.
+  Validated by ATT-2's `snarkjs verify` (a built witness is accepted). api builds clean.
+  Note: `claimedSupply` is passed in, never from the attestation (INVARIANT 6).
 - [ ] **API-3 (P0) — `ChainService.totalSupply()`** via `@stellar/stellar-sdk`
   (simulate `token.total_supply()`, parse i128→bigint). Replaces the stub.
 - [ ] **API-4 (P0) — `ChainService.submitProof()`**: map `EncodedProof`→

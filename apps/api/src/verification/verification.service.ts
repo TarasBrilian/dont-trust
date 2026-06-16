@@ -1,6 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { prove, encodeProof, encodePublicSignals } from "@zk-pob/zk";
-import type { WitnessInput } from "@zk-pob/shared";
+import { buildWitnessInput, type Attestation, type WitnessInput } from "@zk-pob/shared";
 import { ChainService } from "../chain/chain.service.js";
 import {
   VERIFICATION_REPOSITORY,
@@ -20,6 +20,22 @@ export class VerificationService {
     @Inject(VERIFICATION_REPOSITORY)
     private readonly repo: IVerificationRepository,
   ) {}
+
+  /**
+   * Build the witness from an attestation bound to `claimedSupply`, then prove +
+   * submit. `claimedSupply` should be the live on-chain supply (read via
+   * ChainService.totalSupply) — the verifier re-checks it on-chain (INVARIANT 2).
+   * The attestor signs reserves only, so the supply is supplied here, not in the
+   * attestation (INVARIANT 6).
+   */
+  async proveAndSubmitFromAttestation(
+    attestationId: string,
+    attestation: Attestation,
+    claimedSupply: bigint,
+  ): Promise<VerificationRecord> {
+    const witness = buildWitnessInput(attestation, claimedSupply);
+    return this.proveAndSubmit(attestationId, witness);
+  }
 
   /**
    * Build a proof from a witness and submit it. claimedSupply must equal the
