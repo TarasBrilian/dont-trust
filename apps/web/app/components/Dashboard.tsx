@@ -23,6 +23,14 @@ import {
   RefreshIcon,
   ShieldIcon,
 } from "../../src/lib/icons";
+import ProverConsole from "./ProverConsole";
+
+const HEX = "0123456789abcdef";
+function randomTxHash(): string {
+  let s = "0x";
+  for (let i = 0; i < 64; i++) s += HEX[Math.floor(Math.random() * 16)];
+  return s;
+}
 
 /** Animated count-up for a small headline figure. */
 function useCountUp(target: number, durationMs = 700): number {
@@ -88,6 +96,43 @@ export default function Dashboard() {
       showToast(`${label} copied`);
     },
     [showToast],
+  );
+
+  /** Apply a (mock) verification result to the live UI: flip the project's
+   *  status and prepend a history row. Returns the assigned ledger. */
+  const applyVerification = useCallback(
+    (projectId: string, reserves: number) => {
+      const proj = projects.find((p) => p.id === projectId);
+      if (!proj) return { backed: false, ledger: 0 };
+      const backed = reserves >= proj.supply;
+      const ledger =
+        Math.max(...projects.map((p) => p.verifiedLedger)) + 1;
+      const now = new Date();
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === projectId
+            ? { ...p, backed, verifiedLedger: ledger, verifiedAt: now }
+            : p,
+        ),
+      );
+      setHistory((prev) =>
+        [
+          {
+            id: `live-${ledger}-${projectId}`,
+            asset: proj.symbol,
+            at: now,
+            ledger,
+            supply: proj.supply,
+            unit: proj.unit,
+            backed,
+            txHash: randomTxHash(),
+          },
+          ...prev,
+        ].slice(0, 8),
+      );
+      return { backed, ledger };
+    },
+    [projects],
   );
 
   const { total, backedCount, attention } = useMemo(() => {
@@ -185,8 +230,11 @@ export default function Dashboard() {
         </div>
       </section>
 
+      {/* INTERACTIVE DEMO */}
+      <ProverConsole projects={projects} onVerify={applyVerification} />
+
       {/* PROJECTS */}
-      <section className="section rise d2" aria-label="RWA projects">
+      <section className="section rise d3" aria-label="RWA projects">
         <div className="section-head">
           <h2 className="section-title">RWA projects</h2>
           <span className="section-note">Each verified independently on-chain</span>
