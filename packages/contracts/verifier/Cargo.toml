@@ -1,0 +1,15 @@
+[package]
+name = "zk-pob-verifier"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Soroban Groth16/BN254 verifier + proof-of-backing application logic"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+soroban-sdk = { workspace = true }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }

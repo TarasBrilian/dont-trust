@@ -1,0 +1,28 @@
+{
+  "name": "@zk-pob/zk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Circom circuit, trusted-setup build, and snarkjs proving wrapper",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "circuits", "build.sh"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "circuit": "./build.sh",
+    "clean": "rm -rf dist build"
+  },
+  "dependencies": {
+    "@zk-pob/shared": "*",
+    "snarkjs": "^0.7.4"
+  },
+  "devDependencies": {
+    "circomlib": "^2.0.5"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "zk-pob",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zero-Knowledge Proof of Backing for RWA on Stellar",
+  "license": "MIT",
+  "workspaces": [
+    "packages/shared",
+    "packages/zk",
+    "apps/attestor",
+    "apps/api",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:shared": "npm run build --workspace packages/shared",
+    "zk:build": "cd packages/zk && ./build.sh",
+    "contracts:build": "stellar contract build --manifest-path packages/contracts/verifier/Cargo.toml && stellar contract build --manifest-path packages/contracts/token/Cargo.toml",
+    "contracts:test": "cargo test --manifest-path packages/contracts/verifier/Cargo.toml",
+    "api:dev": "npm run start:dev --workspace apps/api",
+    "web:dev": "npm run dev --workspace apps/web",
+    "attestor": "npm run start --workspace apps/attestor",
+    "deploy": "cd scripts && ./deploy.sh",
+    "e2e": "cd scripts && ./e2e.sh"
+  }
+}

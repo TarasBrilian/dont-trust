@@ -1,0 +1,15 @@
+[package]
+name = "zk-pob-token"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Sample RWA token exposing a readable total_supply"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+soroban-sdk = { workspace = true }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }

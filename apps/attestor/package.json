@@ -1,0 +1,25 @@
+{
+  "name": "@zk-pob/attestor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone custodian signer — EdDSA (BabyJubjub) over reserve balances",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "attestor": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node --loader ts-node/esm src/cli.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@zk-pob/shared": "*",
+    "circomlibjs": "^0.1.7"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4",
+    "@types/node": "^20.14.0"
+  }
+}

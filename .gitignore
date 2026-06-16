@@ -1,0 +1,37 @@
+# Node
+node_modules/
+dist/
+build/
+.next/
+*.tsbuildinfo
+npm-debug.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Rust / Soroban
+target/
+**/*.rs.bk
+
+# ZK build artifacts — regenerate, never commit (see CLAUDE.md "Gotchas")
+packages/zk/build/
+*.zkey
+*.wasm
+*.r1cs
+*.sym
+*.ptau
+packages/zk/circuits/*_js/
+verification_key.json
+proof.json
+public.json
+witness.wtns
+input.json
+
+# Deploy outputs
+scripts/.deploy/
+deployed.json
+
+# OS
+.DS_Store
