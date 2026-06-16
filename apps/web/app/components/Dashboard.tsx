@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  getSnapshot,
+  getProjects,
   getHistory,
-  TOKEN,
-  type BackingSnapshot,
+  NETWORK,
+  type RwaProject,
   type VerificationRow,
 } from "../../src/lib/mock";
 import {
@@ -19,15 +18,13 @@ import {
 import {
   CheckIcon,
   CopyIcon,
-  KeyIcon,
-  LayersIcon,
   LinkIcon,
   LockIcon,
   RefreshIcon,
   ShieldIcon,
 } from "../../src/lib/icons";
 
-/** Animated count-up for the headline supply figure. */
+/** Animated count-up for a small headline figure. */
 function useCountUp(target: number, durationMs = 700): number {
   const [value, setValue] = useState(target);
   const fromRef = useRef(target);
@@ -57,15 +54,15 @@ function useCountUp(target: number, durationMs = 700): number {
 }
 
 export default function Dashboard() {
-  const [snap, setSnap] = useState<BackingSnapshot | null>(null);
+  const [projects, setProjects] = useState<RwaProject[]>([]);
   const [history, setHistory] = useState<VerificationRow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
-    const [s, h] = await Promise.all([getSnapshot(), getHistory()]);
-    setSnap(s);
+    const [p, h] = await Promise.all([getProjects(), getHistory()]);
+    setProjects(p);
     setHistory(h);
   }, []);
 
@@ -93,13 +90,21 @@ export default function Dashboard() {
     [showToast],
   );
 
-  const supply = useCountUp(snap?.supply ?? 0);
-  const backed = snap?.backed ?? true;
-  const glow: CSSProperties = {
-    ["--glow" as string]: backed
+  const { total, backedCount, attention } = useMemo(() => {
+    const t = projects.length;
+    const b = projects.filter((p) => p.backed).length;
+    return { total: t, backedCount: b, attention: t - b };
+  }, [projects]);
+
+  const animatedBacked = useCountUp(backedCount);
+  const loaded = total > 0;
+  const allBacked = loaded && attention === 0;
+
+  const overviewGlow = {
+    ["--glow" as string]: allBacked
       ? "rgba(16,185,129,0.14)"
-      : "rgba(239,68,68,0.14)",
-  };
+      : "rgba(251,191,36,0.13)",
+  } as React.CSSProperties;
 
   return (
     <main className="container">
@@ -110,13 +115,13 @@ export default function Dashboard() {
           </span>
           <div>
             <div className="brand-name">zk-pob</div>
-            <div className="brand-sub">Proof of Backing · {TOKEN.symbol}</div>
+            <div className="brand-sub">Proof of Backing · RWA registry</div>
           </div>
         </div>
         <div className="topbar-right">
           <span className="net-pill">
             <span className="dot" aria-hidden />
-            {snap?.network ?? "Stellar Testnet"}
+            {NETWORK}
           </span>
           <button
             className="btn"
@@ -130,90 +135,110 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* HERO STATUS */}
-      <section className="hero rise d1" aria-label="Backing status">
-        <div className="eyebrow">Backing status</div>
-        <div className="status-panel" style={glow}>
-          <div>
-            <div className="supply-label">{TOKEN.name} — circulating supply</div>
-            <div className="supply-figure">
-              <span className="amount mono">{formatAmount(supply)}</span>
-              <span className="ticker">{TOKEN.symbol}</span>
+      {/* PORTFOLIO OVERVIEW */}
+      <section className="hero rise d1" aria-label="Backing overview">
+        <div className="eyebrow">Backing overview</div>
+        <div className="status-panel" style={overviewGlow}>
+          <div className="overview-main">
+            <div className="overview-figure">
+              <span className="amount mono">{loaded ? animatedBacked : "—"}</span>
+              <span className="of">/ {loaded ? total : "—"}</span>
             </div>
-            <div className="status-meta">
-              <div className="item">
-                <span className="k">Verified at</span>
-                <span className="v mono">
-                  {snap ? formatLedger(snap.verifiedLedger) : "—"}
-                </span>
-              </div>
-              <div className="item">
-                <span className="k">Last checked</span>
-                <span className="v">
-                  {snap ? relativeTime(snap.verifiedAt) : "—"}
-                </span>
-              </div>
-              <div className="item">
-                <span className="k">Reserve accounts</span>
-                <span className="v mono">{snap?.reserveAccounts ?? "—"}</span>
+            <div className="overview-label">RWA projects fully backed</div>
+          </div>
+
+          <div className="overview-stats">
+            <div className="item">
+              <div className="k">Projects</div>
+              <div className="v mono">{loaded ? total : "—"}</div>
+            </div>
+            <div className="item">
+              <div className="k">Fully backed</div>
+              <div className="v mono ok">{loaded ? backedCount : "—"}</div>
+            </div>
+            <div className="item">
+              <div className="k">Attention</div>
+              <div className={`v mono ${attention > 0 ? "warn" : ""}`}>
+                {loaded ? attention : "—"}
               </div>
             </div>
           </div>
 
           <div
-            className={`badge ${backed ? "ok" : "fail"}`}
+            className={`badge ${!loaded ? "idle" : allBacked ? "ok" : "warn"}`}
             role="status"
             aria-live="polite"
           >
             <span className="ring" aria-hidden />
-            {backed ? (
+            {!loaded ? (
+              <>Checking on-chain…</>
+            ) : allBacked ? (
               <>
-                <CheckIcon width={18} height={18} /> Fully Backed
+                <CheckIcon width={18} height={18} /> All systems backed
               </>
             ) : (
-              <>Not Backed</>
+              <>
+                {attention} need{attention === 1 ? "s" : ""} attention
+              </>
             )}
           </div>
         </div>
       </section>
 
-      {/* METRICS */}
-      <section className="section rise d2" aria-label="Key metrics">
+      {/* PROJECTS */}
+      <section className="section rise d2" aria-label="RWA projects">
         <div className="section-head">
-          <h2 className="section-title">Key metrics</h2>
-          <span className="section-note">Read trustlessly from chain</span>
+          <h2 className="section-title">RWA projects</h2>
+          <span className="section-note">Each verified independently on-chain</span>
         </div>
-        <div className="metrics">
-          <div className="metric">
-            <div className="k">
-              <LayersIcon width={14} height={14} /> Total supply
-            </div>
-            <div className="v mono">{formatAmount(snap?.supply ?? 0)}</div>
-            <div className="sub">On-chain liability</div>
-          </div>
-          <div className="metric">
-            <div className="k">
-              <ShieldIcon width={14} height={14} /> Reserves ≥ supply
-            </div>
-            <div className={`v ${backed ? "ok" : ""}`}>{backed ? "Yes" : "No"}</div>
-            <div className="sub">Proven in zero-knowledge</div>
-          </div>
-          <div className="metric">
-            <div className="k">
-              <CheckIcon width={14} height={14} /> Verified ledger
-            </div>
-            <div className="v mono">
-              {snap ? formatLedger(snap.verifiedLedger) : "—"}
-            </div>
-            <div className="sub">{snap ? relativeTime(snap.verifiedAt) : "—"}</div>
-          </div>
-          <div className="metric">
-            <div className="k">
-              <KeyIcon width={14} height={14} /> Active attestors
-            </div>
-            <div className="v mono">{snap?.attestors ?? "—"}</div>
-            <div className="sub">On the allowlist</div>
-          </div>
+        <div className="projects-grid">
+          {projects.map((p) => (
+            <article key={p.id} className={`project ${p.backed ? "" : "attn"}`}>
+              <div className="project-head">
+                <span className="tag">{p.category}</span>
+                <span className={`pill ${p.backed ? "ok" : "fail"}`}>
+                  <span className="ring" aria-hidden />
+                  {p.backed ? "Backed" : "Under-backed"}
+                </span>
+              </div>
+
+              <div className="project-name">
+                <span className="sym">{p.symbol}</span>
+                <span className="full">{p.name}</span>
+              </div>
+
+              <div className="project-supply">
+                <span className="amount mono">{formatAmount(p.supply)}</span>
+                <span className="unit">{p.unit}</span>
+              </div>
+
+              <div className="project-meta">
+                <div className="item">
+                  <span className="k">Verified</span>
+                  <span className="v mono">{formatLedger(p.verifiedLedger)}</span>
+                </div>
+                <div className="item">
+                  <span className="k">Checked</span>
+                  <span className="v">{relativeTime(p.verifiedAt)}</span>
+                </div>
+                <div className="item">
+                  <span className="k">Accounts</span>
+                  <span className="v mono">{p.reserveAccounts}</span>
+                </div>
+              </div>
+
+              <div className="project-foot">
+                <span className="hash mono">{truncateMiddle(p.commitment, 8, 6)}</span>
+                <button
+                  className="icon-btn"
+                  onClick={() => copy(p.commitment, `${p.symbol} commitment`)}
+                  aria-label={`Copy ${p.symbol} commitment`}
+                >
+                  <CopyIcon width={15} height={15} />
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -221,7 +246,7 @@ export default function Dashboard() {
       <section className="section rise d3" aria-label="Privacy">
         <div className="section-head">
           <h2 className="section-title">
-            What the proof reveals — and what stays private
+            What every proof reveals — and what stays private
           </h2>
         </div>
         <div className="privacy">
@@ -240,24 +265,9 @@ export default function Dashboard() {
               </li>
               <li>
                 <CheckIcon />
-                Bound to this token and a freshness deadline.
+                Bound to the token and a freshness deadline.
               </li>
             </ul>
-            <div className="commit-row">
-              <span className="k">Reserve commitment</span>
-              <span className="hash mono">
-                {snap ? truncateMiddle(snap.commitment, 10, 8) : "—"}
-              </span>
-              {snap && (
-                <button
-                  className="icon-btn"
-                  onClick={() => copy(snap.commitment, "Commitment")}
-                  aria-label="Copy commitment"
-                >
-                  <CopyIcon width={15} height={15} />
-                </button>
-              )}
-            </div>
           </div>
           <div className="col hidden">
             <h3>
@@ -285,12 +295,13 @@ export default function Dashboard() {
       <section className="section rise d4" aria-label="Verification history">
         <div className="section-head">
           <h2 className="section-title">Verification history</h2>
-          <span className="section-note">Last {history.length} checks</span>
+          <span className="section-note">Across all projects · last {history.length} checks</span>
         </div>
         <div className="table-wrap">
           <table className="history">
             <thead>
               <tr>
+                <th>Asset</th>
                 <th>Time</th>
                 <th className="hide-sm">Ledger</th>
                 <th className="num">Supply</th>
@@ -301,9 +312,13 @@ export default function Dashboard() {
             <tbody>
               {history.map((row) => (
                 <tr key={row.id}>
+                  <td className="mono">{row.asset}</td>
                   <td title={formatDateTime(row.at)}>{relativeTime(row.at)}</td>
                   <td className="hide-sm mono">{formatLedger(row.ledger)}</td>
-                  <td className="num mono">{formatAmount(row.supply)}</td>
+                  <td className="num mono">
+                    {formatAmount(row.supply)}{" "}
+                    <span style={{ color: "var(--text-faint)" }}>{row.unit}</span>
+                  </td>
                   <td>
                     <span className={`pill ${row.backed ? "ok" : "fail"}`}>
                       <span className="ring" aria-hidden />

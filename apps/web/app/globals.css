@@ -24,6 +24,10 @@
   --danger-bg: rgba(239, 68, 68, 0.1);
   --danger-border: rgba(251, 113, 133, 0.35);
 
+  --warn: #fbbf24;
+  --warn-bg: rgba(251, 191, 36, 0.1);
+  --warn-border: rgba(251, 191, 36, 0.32);
+
   --radius: 16px;
   --radius-sm: 11px;
   --radius-pill: 999px;
@@ -335,6 +339,26 @@ a {
   border: 1px solid var(--danger-border);
 }
 
+.badge.warn {
+  color: var(--warn);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  font-size: 14px;
+  padding: 11px 18px;
+}
+
+.badge.idle {
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  padding: 11px 18px;
+}
+
+.badge.idle .ring {
+  animation: pulse 1.6s infinite;
+}
+
 .badge .ring {
   width: 11px;
   height: 11px;
@@ -412,6 +436,189 @@ a {
   font-size: 12px;
   color: var(--text-faint);
   margin-top: 4px;
+}
+
+/* ---------- overview hero (portfolio) ---------- */
+.overview {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.overview-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.overview-figure .amount {
+  font-size: clamp(44px, 8vw, 66px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.overview-figure .of {
+  font-size: 26px;
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.overview-label {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+.overview-main {
+  flex: 1;
+  min-width: 220px;
+}
+
+.overview-stats {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.overview-stats .item .k {
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.overview-stats .item .v {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-top: 6px;
+}
+
+.overview-stats .item .v.ok {
+  color: var(--ok);
+}
+
+.overview-stats .item .v.warn {
+  color: var(--warn);
+}
+
+/* ---------- project cards ---------- */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.project {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 22px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: border-color 0.18s var(--ease), transform 0.18s var(--ease),
+    background 0.18s var(--ease);
+}
+
+.project:hover {
+  border-color: #313a49;
+  background: var(--surface-2);
+  transform: translateY(-2px);
+}
+
+.project.attn {
+  border-color: var(--warn-border);
+}
+
+.project-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tag {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+}
+
+.project-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.project-name .sym {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.project-name .full {
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.project-supply {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.project-supply .amount {
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.project-supply .unit {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.project-meta {
+  display: flex;
+  gap: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.project-meta .item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.project-meta .k {
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.project-meta .v {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.project-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.project-foot .hash {
+  font-size: 12px;
+  color: var(--text-faint);
 }
 
 /* ---------- privacy panel ---------- */
@@ -705,6 +912,12 @@ td.num {
 }
 
 /* ---------- responsive ---------- */
+@media (max-width: 980px) {
+  .projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 860px) {
   .metrics {
     grid-template-columns: 1fr 1fr;
@@ -736,6 +949,9 @@ td.num {
     border-bottom: none;
   }
   .privacy {
+    grid-template-columns: 1fr;
+  }
+  .projects-grid {
     grid-template-columns: 1fr;
   }
   .brand-sub {
