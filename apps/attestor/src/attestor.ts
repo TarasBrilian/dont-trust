@@ -16,6 +16,7 @@ import {
   computeMessage,
   type PoseidonFn,
   type Attestation,
+  type AttestorPublicKey,
   type ReserveAccount,
 } from "@zk-pob/shared";
 
@@ -34,6 +35,12 @@ export class Attestor {
     const F = poseidonRaw.F;
     const poseidon: PoseidonFn = (inputs) => F.toObject(poseidonRaw(inputs));
     return new Attestor(eddsa, poseidon, F, privateKey);
+  }
+
+  /** This attestor's BabyJubjub public key (Ax, Ay) as field elements. */
+  publicKey(): AttestorPublicKey {
+    const pub = this.eddsa.prv2pub(this.privateKey);
+    return { Ax: this.F.toObject(pub[0]), Ay: this.F.toObject(pub[1]) };
   }
 
   /** Sign a reserve set for a given token + expiry, returning a full attestation. */

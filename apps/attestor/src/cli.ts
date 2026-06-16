@@ -23,10 +23,33 @@ function parseArgs(argv: string[]): Record<string, string> {
   return out;
 }
 
-async function main() {
-  const args = parseArgs(process.argv.slice(2));
+/** Load the attestor private key from ATTESTOR_PRIVATE_KEY (hex). */
+function loadKey(): Uint8Array {
   const keyHex = process.env.ATTESTOR_PRIVATE_KEY;
   if (!keyHex) throw new Error("ATTESTOR_PRIVATE_KEY not set");
+  return Uint8Array.from(Buffer.from(keyHex.replace(/^0x/, ""), "hex"));
+}
+
+/** A field element as 32-byte big-endian hex (the on-chain BytesN form). */
+function feltHex(x: bigint): string {
+  const hex = x.toString(16);
+  if (hex.length > 64) throw new Error(`field element too large: ${x}`);
+  return hex.padStart(64, "0");
+}
+
+/**
+ * `attestor pubkey` — print the on-chain allowlist key ax||ay (64 bytes, 128 hex)
+ * for `Verifier.allow_attestor`. deploy.sh (OPS-2) consumes this on stdout.
+ */
+async function pubkeyCmd() {
+  const attestor = await Attestor.create(loadKey());
+  const { Ax, Ay } = attestor.publicKey();
+  process.stdout.write(feltHex(Ax) + feltHex(Ay) + "\n");
+}
+
+async function signCmd() {
+  const args = parseArgs(process.argv.slice(2));
+  const key = loadKey();
   if (!args.book || !args.token || !args.expiry) {
     throw new Error("usage: attestor sign --book <file> --token <felt> --expiry <unix>");
   }
@@ -38,7 +61,6 @@ async function main() {
     salt: BigInt(r.salt),
   }));
 
-  const key = Uint8Array.from(Buffer.from(keyHex.replace(/^0x/, ""), "hex"));
   const attestor = await Attestor.create(key);
   const attestation = await attestor.attest(accounts, BigInt(args.token), BigInt(args.expiry));
 
@@ -49,6 +71,12 @@ async function main() {
     2,
   );
   process.stdout.write(json + "\n");
+}
+
+async function main() {
+  const cmd = process.argv[2];
+  if (cmd === "pubkey") return pubkeyCmd();
+  return signCmd(); // default: `sign`
 }
 
 main().catch((e) => {

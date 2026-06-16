@@ -42,14 +42,13 @@ crossing a process boundary (attestor→api→chain→web).
 
 These change downstream work; decide before building Phase 3+.
 
-- [ ] **DEC-1 (P0) — Single-token vs multi-token verifier.** The verifier binds
-  **one** token at `init` (`DataKey::Token`/`TokenIdFelt`). The dashboard shows
-  **many** RWA projects. Pick one:
-  - (a) **One verifier+token deploy per project** (simplest; a registry contract
-    or the backend lists deployments), or
-  - (b) **Multi-tenant verifier**: keyed storage `Project(token_id) -> {vk,
-    token, status}`, `submit_proof(project_id, …)`.
-  **Done when:** decision recorded here; contract/data model updated to match.
+- [x] **DEC-1 ✅ = (a) One verifier+token deploy per project.** Chosen for the
+  hackathon: zero contract changes (the deployed verifier/token already pass
+  `cargo test`), full isolation per project, and the demo needs only one pair
+  (RWUSD). Many projects = a list of `{tokenId, verifierId}` in `deployed.json`;
+  the frontend reads each project's status from its own verifier address.
+  Multi-tenant (b) is the future scaling path, not needed now. CON-3 is therefore
+  a no-op; `deploy.sh` (OPS-2) deploys one pair.
 - [ ] **DEC-2 (P1) — Supply domain.** Circuit range-checks `claimedSupply` to
   64-bit; on-chain supply is `i128`. Decide max supply (cap at 2^64−1 and reject
   larger, or widen the circuit). **Done when:** documented + enforced in circuit
@@ -113,8 +112,9 @@ These change downstream work; decide before building Phase 3+.
   (`apps/attestor/test/attest-prove-verify.test.mjs`): happy + over-backed verify,
   under-backed is unprovable (solvency constraint, circom l.89). No `genfixture.mjs`
   replica — the test exercises the same builder apps/api uses. Run: `npm test -w apps/attestor`.
-- [ ] **ATT-3 (P1)** Output the on-chain allowlist key (`ax||ay`) and a
-  ready-to-submit attestation JSON the backend ingests as-is.
+- [x] **ATT-3 ✅** `attestor pubkey` prints the on-chain allowlist key (`ax||ay`,
+  128 hex) for `allow_attestor` (consumed by deploy.sh); `attestor sign` already
+  emits the ingestable attestation JSON. `Attestor.publicKey()` added.
 - [ ] **ATT-4 (P1)** Key management: load/generate BabyJubjub key from a file/env
   safely; never log it. Document the separation from `apps/api` (INVARIANT: key
   never in backend).
@@ -202,9 +202,13 @@ These change downstream work; decide before building Phase 3+.
 ## 8. Scripts / DevOps
 
 - [x] **OPS-1 ✅** `deploy.sh` builds + deploys wasm (version-agnostic path).
-- [ ] **OPS-2 (P0) — Finish `deploy.sh`.** `init` token + verifier (with vk from
-  ZK-5 + tokenId felt), `set_supply`, `allow_attestor`; write all ids to
-  `deployed.json` consumed by api + web. *Depends on:* CON-3, ZK-5.
+- [x] **OPS-2 ✅ — `deploy.sh` deploys + initializes on testnet.** Deploys a
+  token+verifier pair (DEC-1=a), runs `token.init`/`set_supply(1000000)`,
+  `verifier.init` (token + tokenId felt 424242 + ZK-5 vk), `allow_attestor` (key
+  from `attestor pubkey`); writes `deployed.json` and upserts ids into `.env`.
+  **Deployed live:** token `CCHP6GXXU7NCOUZ3636BYJGMWPGCPDVNTDFI2GWQBI2KOSYHVQZALU64`,
+  verifier `CDSVPPO6PQESEIHB6PUWVIX63KBIKJ6NSUEXMHY5GLI3QRQFHGUV3HEV`. Verified
+  on-chain: `total_supply()==1000000`, `status()==null` (no proof yet).
 - [ ] **OPS-3 (P0) — Finish `e2e.sh`.** Run attest→build witness→prove→submit on
   testnet; assert on-chain status backed; then the **tamper case** (reserves <
   supply) must fail on-chain. Both paths (CLAUDE.md "Done means"). *Depends on:*
