@@ -28,8 +28,8 @@ touches security references the invariant it must preserve.
 | Backend skeleton (NestJS, repository pattern) | 🟡 | builds; DI + in-memory repos done; chain calls stubbed |
 | Attestor (EdDSA signer + CLI) | 🟡 | typechecks; never run end-to-end as a process |
 | Frontend (dashboard, prover console, request flow) | 🟡 | builds; **all data mock**; no chain/API calls |
-| Deploy / e2e scripts | 🟡 | build+deploy wasm only; init/e2e are TODO |
-| Live testnet deployment | ⬜ | never deployed |
+| Deploy / e2e scripts | ✅ | deploy.sh (init+allowlist) + e2e.sh (happy+tamper) run on testnet |
+| Live testnet deployment | ✅ | token CCHP6GXX..LU64, verifier CDSVPPO6..3HEV; Backed event emitted |
 | CI | ⬜ | none |
 
 **Proven twice:** Groth16 verification works offline (snarkjs) and on-chain
@@ -149,8 +149,11 @@ These change downstream work; decide before building Phase 3+.
   scvSymbol keys (sorted), so the Proof is now built with an explicit
   `xdr.ScMapEntry`/`scvSymbol` helper — verified offline (symbol keys a,b,c; bytes
   64/128/64; signals vec 6×32B). A trap (PairingFailed/SupplyMismatch/…) surfaces as
-  a thrown error at simulate, so the tamper case fails loudly. *Done when:* a real
-  proof verifies against a deployed contract (OPS-3). *Depends on:* CON-3, ZK-5 ✅.
+  a thrown error at simulate, so the tamper case fails loudly. OPS-3 proved the
+  encoded proof/signals bytes are contract-valid live (a real proof verified
+  on-chain via the same @zk-pob/zk encoder); the remaining unexercised bit is only
+  ChainService's own stellar-sdk submission plumbing, which API-5 will drive.
+  *Depends on:* CON-3 (no-op per DEC-1), ZK-5 ✅.
 - [ ] **API-5 (P0) — Endpoints.** `POST /attestations` (ingest attestor output),
   `POST /verifications` (build witness → prove → submit → persist), keep
   `GET /verifications`. Add DTO validation (`class-validator`). *Depends on:*
@@ -209,10 +212,12 @@ These change downstream work; decide before building Phase 3+.
   **Deployed live:** token `CCHP6GXXU7NCOUZ3636BYJGMWPGCPDVNTDFI2GWQBI2KOSYHVQZALU64`,
   verifier `CDSVPPO6PQESEIHB6PUWVIX63KBIKJ6NSUEXMHY5GLI3QRQFHGUV3HEV`. Verified
   on-chain: `total_supply()==1000000`, `status()==null` (no proof yet).
-- [ ] **OPS-3 (P0) — Finish `e2e.sh`.** Run attest→build witness→prove→submit on
-  testnet; assert on-chain status backed; then the **tamper case** (reserves <
-  supply) must fail on-chain. Both paths (CLAUDE.md "Done means"). *Depends on:*
-  API-2..5, OPS-2.
+- [x] **OPS-3 ✅ — `e2e.sh` runs the full loop on testnet.** HAPPY:
+  attest→witness(shared builder)→`snarkjs fullprove`+verify→`submit_proof`→on-chain
+  `Backed` event, `status().backed==true` (supply 1000000). TAMPER A (a balance
+  below threshold): proof is unprovable. TAMPER B (flipped public signal): verifier
+  rejects on-chain. Helpers: `scripts/lib/{mkwitness,encode-submit}.mjs`. Proven tx:
+  `7981595f090810f68ef24aa360ed19e0ffa68a70495f491c2a128e9e3c829b23`.
 - [ ] **OPS-4 (P1) — CI** (GitHub Actions): `cargo test`, `npm run build`
   (workspaces), circuit compile, encoder/shared unit tests on every push.
 - [ ] **OPS-5 (P1)** Funded testnet identity setup doc + `.env` wiring across apps.
