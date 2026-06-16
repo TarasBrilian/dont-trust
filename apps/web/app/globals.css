@@ -759,6 +759,18 @@ a {
   cursor: default;
 }
 
+.mode-toggle {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.chip.chip-on,
+.chip.chip-on:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent, #10b981);
+  background: color-mix(in srgb, var(--accent, #10b981) 14%, transparent);
+}
+
 .btn.run {
   width: 100%;
   justify-content: center;

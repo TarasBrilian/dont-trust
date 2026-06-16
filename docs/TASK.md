@@ -142,22 +142,23 @@ These change downstream work; decide before building Phase 3+.
 - [x] **API-3 ✅ — `ChainService.totalSupply()`** via `@stellar/stellar-sdk` v12
   (`rpc.Server`): credential-free read-only `simulateTransaction` of
   `token.total_supply()`, `scValToNative` i128→bigint. Replaces the stub; api builds.
-- [~] **API-4 🟡 — `ChainService.submitProof()`** (code complete; live check pending
-  OPS-2/OPS-3). Maps `EncodedProof`→`Proof` struct + signals→`Vec<BytesN<32>>`,
-  `prepareTransaction`(simulate+assemble)→sign→`sendTransaction`→poll. **Bug caught
-  pre-deploy:** `nativeToScVal({…})` emits scvString keys; a Soroban struct needs
-  scvSymbol keys (sorted), so the Proof is now built with an explicit
-  `xdr.ScMapEntry`/`scvSymbol` helper — verified offline (symbol keys a,b,c; bytes
-  64/128/64; signals vec 6×32B). A trap (PairingFailed/SupplyMismatch/…) surfaces as
-  a thrown error at simulate, so the tamper case fails loudly. OPS-3 proved the
-  encoded proof/signals bytes are contract-valid live (a real proof verified
-  on-chain via the same @zk-pob/zk encoder); the remaining unexercised bit is only
-  ChainService's own stellar-sdk submission plumbing, which API-5 will drive.
-  *Depends on:* CON-3 (no-op per DEC-1), ZK-5 ✅.
-- [ ] **API-5 (P0) — Endpoints.** `POST /attestations` (ingest attestor output),
-  `POST /verifications` (build witness → prove → submit → persist), keep
-  `GET /verifications`. Add DTO validation (`class-validator`). *Depends on:*
-  API-2..4.
+- [x] **API-4 ✅ — `ChainService.submitProof()`** proven live via API-5. Maps
+  `EncodedProof`→`Proof` struct + signals→`Vec<BytesN<32>>`,
+  `prepareTransaction`(simulate+assemble)→sign→`sendTransaction`→poll→parse.
+  **Bug caught pre-deploy:** `nativeToScVal({…})` emits scvString keys; a Soroban
+  struct needs scvSymbol keys (sorted), so the Proof is built with an explicit
+  `xdr.ScMapEntry`/`scvSymbol` helper. A trap (PairingFailed/SupplyMismatch/…)
+  surfaces as a thrown error at simulate. **Required `@stellar/stellar-sdk` 12→16**:
+  testnet is Protocol 23 (TransactionMeta v4) which v12 can't parse (`Bad union
+  switch: 4` in `getTransaction`). On v16, `POST /verifications/demo` submitted a
+  real proof on-chain → `{backed:true, txHash, ledger}`.
+- [x] **API-5 ✅ — Endpoints.** `POST /attestations` (ingest metadata),
+  `POST /verifications` (full attestation → witness → real Groth16 prove → submit →
+  persist), `POST /verifications/demo` (proves a server-side demo attestation;
+  drives the prover console), `GET /verifications[/latest]`. `class-validator`
+  DTOs + global `ValidationPipe`, CORS. ConfigModule loads the repo-root `.env`;
+  ZK artifact paths resolve from the monorepo root. Backend can `require()` the ESM
+  `@zk-pob/{zk,shared}` (Node 22). Verified live: demo returned `backed:true`.
 - [ ] **API-6 (P1) — Verification-request backend.** Mirror the frontend flow
   server-side: `VerificationRequest` entity + repository, `POST /requests`,
   `GET /requests`, `PATCH /requests/:id` (status transitions), approve →
@@ -193,9 +194,11 @@ These change downstream work; decide before building Phase 3+.
   demo (id collisions dropped). `next build` passes.
 - [ ] **WEB-6 (P1) — Wire request flow to the API** (`POST /requests`, queue/detail
   from `GET/PATCH`), replacing the localStorage store. *Depends on:* API-6.
-- [ ] **WEB-7 (P1) — Prover console → backend.** Optional "real proof" mode that
-  calls `POST /verifications` so the console runs an **actual** Groth16 proof, not
-  a simulation. Keep the simulated mode for offline demos. *Depends on:* API-5.
+- [x] **WEB-7 ✅ — Prover console → backend.** A "Simulated / Real proof" toggle.
+  Real mode `POST`s to `/verifications/demo` (NEXT_PUBLIC_API_URL), animates the
+  pipeline while the backend proves+submits, then shows the on-chain result with a
+  stellar.expert tx link and refreshes the live dashboard. Simulated mode (with the
+  interactive tamper slider) is unchanged for offline demos. web build passes.
 - [ ] **WEB-8 (P1) — Wallet integration (Freighter)** for issuer submission and
   admin approve/reject signing real transactions.
 - [ ] **WEB-9 (P2)** History from chain events (indexed) + per-project history.

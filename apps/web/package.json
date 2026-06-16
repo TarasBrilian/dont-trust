@@ -9,11 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@stellar/stellar-sdk": "^16.0.0",
     "@zk-pob/shared": "*",
     "next": "^15.1.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@stellar/stellar-sdk": "^12.3.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

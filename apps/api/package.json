@@ -10,16 +10,18 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@zk-pob/shared": "*",
-    "@zk-pob/zk": "*",
     "@nestjs/common": "^10.4.0",
+    "@nestjs/config": "^3.2.3",
     "@nestjs/core": "^10.4.0",
     "@nestjs/platform-express": "^10.4.0",
-    "@nestjs/config": "^3.2.3",
+    "@stellar/stellar-sdk": "^16.0.0",
+    "@zk-pob/shared": "*",
+    "@zk-pob/zk": "*",
     "circomlibjs": "^0.1.7",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.4",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1",
-    "@stellar/stellar-sdk": "^12.3.0"
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.0",

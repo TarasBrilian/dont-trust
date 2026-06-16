@@ -217,7 +217,11 @@ export default function Dashboard() {
       </section>
 
       {/* INTERACTIVE DEMO */}
-      <ProverConsole projects={projects} onVerify={applyVerification} />
+      <ProverConsole
+        projects={projects}
+        onVerify={applyVerification}
+        onRefresh={refresh}
+      />
 
       {/* PROJECTS */}
       <section className="section rise d3" aria-label="RWA projects">
