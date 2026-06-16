@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { prove } from "@zk-pob/zk";
+import { prove, encodeProof, encodePublicSignals } from "@zk-pob/zk";
 import type { WitnessInput } from "@zk-pob/shared";
 import { ChainService } from "../chain/chain.service.js";
 import {
@@ -37,12 +37,12 @@ export class VerificationService {
 
     const { proof, publicSignals } = await prove(witness, { wasmPath, zkeyPath });
 
-    // TODO: serialize proof points to BN254 big-endian concat(X, Y) bytes (see
-    // packages/zk encodeG1/G2 TODO) before handing to the chain.
-    const proofBytes = new Uint8Array();
-    void proof;
+    // Serialize to the BN254 host-format the verifier expects (single source:
+    // @zk-pob/zk encoder, which owns the G2 c1||c0 ordering).
+    const encodedProof = encodeProof(proof);
+    const encodedSignals = encodePublicSignals(publicSignals);
 
-    const result = await this.chain.submitProof(proofBytes, publicSignals);
+    const result = await this.chain.submitProof(encodedProof, encodedSignals);
 
     return this.repo.save({
       id: "ver_" + Math.random().toString(36).slice(2, 12),

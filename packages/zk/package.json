@@ -16,6 +16,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "circuit": "./build.sh",
+    "gen:testdata": "npm run build && node genfixture.mjs && snarkjs groth16 fullprove input.json build/proof_of_backing_js/proof_of_backing.wasm build/proof_of_backing_final.zkey proof.json public.json && node gentestdata.mjs",
     "clean": "rm -rf dist build"
   },
   "dependencies": {

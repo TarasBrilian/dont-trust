@@ -23,7 +23,11 @@ echo "==> 2. backend builds witness + proves (snarkjs fullprove)"
 #   snarkjs groth16 verify build/verification_key.json public.json proof.json
 
 echo "==> 3. submit proof to verifier"
-# stellar contract invoke --id <verifierId> -- submit_proof --proof ... --signals ...
+# stellar contract invoke --id <verifierId> -- submit_proof \
+#     --proof '{a,b,c}' --signals '[felt x6]'   (BN254 host-format bytes from
+#     the @zk-pob/zk encoder). NOTE: the Groth16/BN254 verification itself is
+#     already covered offline (snarkjs) AND on-chain (cargo test -p
+#     zk-pob-verifier runs the real pairing_check); this step is the live wiring.
 
 echo "==> 4. assert on-chain status == backed"
 # stellar contract invoke --id <verifierId> -- status

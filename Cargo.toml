@@ -8,7 +8,9 @@ members = [
 ]
 
 [workspace.dependencies]
-soroban-sdk = "22.0.0"
+# 25.x = Protocol 25 (X-Ray), which introduces the BN254 host functions
+# (bn254_g1_add / bn254_g1_mul / pairing_check) the verifier relies on.
+soroban-sdk = "25.3.1"
 
 [profile.release]
 opt-level = "z"

@@ -50,6 +50,4 @@ export async function verifyOffline(
   return groth16.verify(verificationKey as object, publicSignals, proof as object);
 }
 
-// TODO: BN254 point serialization for the Soroban host functions is big-endian
-// concat(X, Y). Add encodeG1 / encodeG2 / encodeVk here so apps/api submits
-// bytes the verifier accepts (CLAUDE.md "Gotchas").
+export * from "./encode.js";

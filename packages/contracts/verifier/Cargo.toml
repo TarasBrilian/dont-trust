@@ -13,3 +13,5 @@ soroban-sdk = { workspace = true }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
+# The verifier reads total_supply cross-contract; the test deploys the real token.
+zk-pob-token = { path = "../token" }
