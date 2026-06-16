@@ -40,10 +40,11 @@ VERIFIER_ID=$(stellar contract deploy \
 echo "token:    $TOKEN_ID"
 echo "verifier: $VERIFIER_ID"
 
-# TODO: initialize the contracts and register the attestor:
+# TODO (OPS-2): initialize the contracts and register the attestor:
 #   token    init + set_supply
-#   verifier init <admin> <token_id> <token_id_felt> <vk>   (vk from
-#            packages/zk/build/verification_key.json via the @zk-pob/zk encoder)
+#   verifier init <admin> <token_id> <token_id_felt> --vk "$(cat \
+#            "$ROOT/packages/zk/build/vk.contract.json")"   (ZK-5 artifact; run
+#            `npm run vk:export -w packages/zk` to (re)generate it)
 #   verifier allow_attestor <ax||ay>   (attestor public key from apps/attestor)
 
 cat > "$OUT/deployed.json" <<JSON

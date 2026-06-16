@@ -101,3 +101,35 @@ export function encodeProof(proof: SnarkjsProof): EncodedProof {
 export function encodePublicSignals(pub: string[]): Uint8Array[] {
   return pub.map(feltTo32BE);
 }
+
+/** Lowercase hex (no 0x) for a byte array — the form the stellar CLI takes for a BytesN arg. */
+export function bytesToHex(u8: Uint8Array): string {
+  let s = "";
+  for (const b of u8) s += b.toString(16).padStart(2, "0");
+  return s;
+}
+
+/**
+ * Contract-ready verification key: every BN254 point as a hex string, matching
+ * the `VerificationKey` struct the Soroban verifier's `init` takes (BytesN<64> /
+ * BytesN<128> fields, `ic` of length nPublic+1). Reuses encodeVk so the byte
+ * layout (incl. the G2 c1||c0 ordering) stays single-sourced.
+ */
+export interface ContractVk {
+  alpha1: string; // 64B  -> 128 hex
+  beta2: string; // 128B -> 256 hex
+  gamma2: string;
+  delta2: string;
+  ic: string[]; // each 64B -> 128 hex; length nPublic+1
+}
+
+export function encodeVkHex(vk: SnarkjsVk): ContractVk {
+  const e = encodeVk(vk);
+  return {
+    alpha1: bytesToHex(e.alpha1),
+    beta2: bytesToHex(e.beta2),
+    gamma2: bytesToHex(e.gamma2),
+    delta2: bytesToHex(e.delta2),
+    ic: e.ic.map(bytesToHex),
+  };
+}

@@ -71,9 +71,12 @@ These change downstream work; decide before building Phase 3+.
 - [ ] **ZK-4 (P1)** Unit tests for `encode.ts` — assert G1=64B, G2=128B, the
   `c1||c0` Fp2 ordering, and `feltTo32BE` edge cases. *Done when:* `vitest`/`node
   --test` suite passes; guards the #1 silent-failure surface.
-- [ ] **ZK-5 (P1)** Verify-key export helper: read `verification_key.json` →
-  contract-ready bytes (reuse `encodeVk`) emitted as a deploy artifact (JSON or
-  CLI args). *Depends on:* DEC-1. *Done when:* `deploy.sh` consumes it.
+- [x] **ZK-5 ✅** Verify-key export: `encodeVkHex` (reuses `encodeVk`, single-source
+  BN254 layout) + `exportvk.mjs` (`npm run vk:export`) read `verification_key.json`
+  → `build/vk.contract.json`, the hex-string `VerificationKey` struct `init` takes.
+  Validates BytesN widths + IC count (7) + nPublic (6); bytes verified byte-identical
+  to the proven on-chain test vector (`testdata.rs`). *Remaining:* `deploy.sh --vk`
+  wiring is OPS-2 (gated on DEC-1).
 - [ ] **ZK-6 (P2)** Real trusted-setup ceremony (multi-party phase-2) for any
   non-demo use. *Depends on:* DEC-4.
 - [ ] **ZK-7 (P2)** Merkle sum-tree variant for N>8 (ARCH §8). *Depends on:* DEC-3.
