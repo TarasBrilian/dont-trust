@@ -18,16 +18,23 @@ echo "==> building contracts"
 stellar contract build --manifest-path "$ROOT/packages/contracts/token/Cargo.toml"
 stellar contract build --manifest-path "$ROOT/packages/contracts/verifier/Cargo.toml"
 
-WASM_DIR="$ROOT/target/wasm32-unknown-unknown/release"
+# stellar CLI's wasm target dir changed across versions (wasm32v1-none on 25.x,
+# wasm32-unknown-unknown earlier). Resolve it instead of hardcoding.
+find_wasm() {
+  find "$ROOT/target" -name "$1" -path "*release*" -not -path "*/deps/*" 2>/dev/null | head -1
+}
+TOKEN_WASM=$(find_wasm zk_pob_token.wasm)
+VERIFIER_WASM=$(find_wasm zk_pob_verifier.wasm)
+[ -n "$TOKEN_WASM" ] && [ -n "$VERIFIER_WASM" ] || { echo "wasm not found under target/"; exit 1; }
 
 echo "==> deploying token"
 TOKEN_ID=$(stellar contract deploy \
-  --wasm "$WASM_DIR/zk_pob_token.wasm" \
+  --wasm "$TOKEN_WASM" \
   --source "$SOURCE" --network "$NETWORK")
 
 echo "==> deploying verifier"
 VERIFIER_ID=$(stellar contract deploy \
-  --wasm "$WASM_DIR/zk_pob_verifier.wasm" \
+  --wasm "$VERIFIER_WASM" \
   --source "$SOURCE" --network "$NETWORK")
 
 echo "token:    $TOKEN_ID"

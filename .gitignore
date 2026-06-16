@@ -14,6 +14,7 @@ npm-debug.log*
 # Rust / Soroban
 target/
 **/*.rs.bk
+**/test_snapshots/
 
 # ZK build artifacts — regenerate, never commit (see CLAUDE.md "Gotchas")
 packages/zk/build/
