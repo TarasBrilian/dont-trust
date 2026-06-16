@@ -4,10 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getProjects,
   getHistory,
-  NETWORK,
   type RwaProject,
   type VerificationRow,
 } from "../../src/lib/mock";
+import { approvedAsProjects } from "../../src/lib/requests";
 import {
   formatAmount,
   formatDateTime,
@@ -21,7 +21,6 @@ import {
   LinkIcon,
   LockIcon,
   RefreshIcon,
-  ShieldIcon,
 } from "../../src/lib/icons";
 import ProverConsole from "./ProverConsole";
 
@@ -70,7 +69,8 @@ export default function Dashboard() {
 
   const load = useCallback(async () => {
     const [p, h] = await Promise.all([getProjects(), getHistory()]);
-    setProjects(p);
+    // Approved verification requests appear alongside the seed projects.
+    setProjects([...approvedAsProjects(), ...p]);
     setHistory(h);
   }, []);
 
@@ -153,21 +153,10 @@ export default function Dashboard() {
 
   return (
     <main className="container">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-mark" aria-hidden>
-            <ShieldIcon width={19} height={19} />
-          </span>
-          <div>
-            <div className="brand-name">zk-pob</div>
-            <div className="brand-sub">Proof of Backing · RWA registry</div>
-          </div>
-        </div>
-        <div className="topbar-right">
-          <span className="net-pill">
-            <span className="dot" aria-hidden />
-            {NETWORK}
-          </span>
+      {/* PORTFOLIO OVERVIEW */}
+      <section className="hero rise d1" aria-label="Backing overview">
+        <div className="eyebrow-row">
+          <span className="eyebrow">Backing overview</span>
           <button
             className="btn"
             onClick={refresh}
@@ -178,11 +167,6 @@ export default function Dashboard() {
             {refreshing ? "Refreshing…" : "Refresh"}
           </button>
         </div>
-      </header>
-
-      {/* PORTFOLIO OVERVIEW */}
-      <section className="hero rise d1" aria-label="Backing overview">
-        <div className="eyebrow">Backing overview</div>
         <div className="status-panel" style={overviewGlow}>
           <div className="overview-main">
             <div className="overview-figure">

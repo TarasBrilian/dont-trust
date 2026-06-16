@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Sora, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import SiteHeader from "./components/SiteHeader";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -25,7 +26,10 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${sora.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <SiteHeader />
+        {children}
+      </body>
     </html>
   );
 }
